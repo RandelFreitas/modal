@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -9,7 +9,6 @@ import TextField from '@material-ui/core/TextField';
 import { Divider, Grid } from '@material-ui/core';
 
 import { useFormik } from 'formik';
-import { useModal } from '../context/controllerModal';
 
 const useStyles = makeStyles(() => createStyles({
   root: {
@@ -22,34 +21,41 @@ const useStyles = makeStyles(() => createStyles({
 }));
 
 const defaultFormShape = {
-  userName: '',
+  name: '',
 };
 
 const Modal = (props) => {
   const classes = useStyles();
-  const { saveEdit, nameToEdit } = props;
-  
-  const { open, openModal } = useModal();
-
-  console.log("Nome para editar: " + nameToEdit.name);
+  const { open, onClose, edit, nameToEdit } = props;
+  const [textDialog, setTextDialog] = useState('');
 
   const formik = useFormik({
-    initialValues: nameToEdit || defaultFormShape,
+    initialValues: defaultFormShape,
     onSubmit: (values, { resetForm }) => {
-      if(nameToEdit){
+      if(nameToEdit)
         console.log('cadastro editado', values);
-      }else{
+      else
         console.log('cadastro novo', values);
-      }
+
       resetForm({});
     },
   });
 
+  const setValues = () => {
+    if(nameToEdit && (nameToEdit.length > 0 || nameToEdit.name)) {
+      formik.setValues(nameToEdit);
+      setTextDialog('Editar');
+    } else {
+      formik.setValues(defaultFormShape);
+      setTextDialog('Cadastrar');
+    }
+  }
+
   return (
     <>
-      <Dialog open={open} aria-labelledby="max-width-dialog-title">
+      <Dialog open={open} onClose={onClose} onEnter={setValues} aria-labelledby="max-width-dialog-title">
         <form className={classes.root} noValidate onSubmit={formik.handleSubmit}>
-          <DialogTitle id="max-width-dialog-title">Nome que deveria aparecer abaixo: {nameToEdit.name}</DialogTitle>
+          <DialogTitle id="max-width-dialog-title">{textDialog}</DialogTitle>
           <DialogContent>
             <Grid container spacing={1}>
               <Grid item xs={6}>
@@ -61,14 +67,14 @@ const Modal = (props) => {
                   label="Nome"
                   fullWidth
                   onChange={formik.handleChange}
-                  value={formik.values.nameToEdit? formik.values.nameToEdit.name : ''}
+                  value={formik.values.name ? formik.values.name : ''}
                 />
               </Grid>
             </Grid>
             <Divider className={classes.divider} />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => openModal()} color="primary" variant="outlined">
+            <Button onClick={onClose} color="primary" variant="outlined">
               Cancelar
             </Button>
             <Button
